@@ -5,19 +5,13 @@ const expect = chai.expect
 
 // slogan: when you like a little risk with you proxies
 // proxies to test with 
-let proxies = [ '139.59.1.14:8080', '94.45.74.60:8080', 
+let test_proxies = [ '139.59.1.14:8080', '94.45.74.60:8080', 
     '161.35.70.249:3128', '217.182.170.224:80', '222.138.76.6:9002',
     '218.252.206.89:80',  '18.214.66.210:80', '120.234.203.171:9002' ]
+
 // check if it is able to read from difrent files
-describe('being able to process different types of proxies inputs', () => {
+describe('read form proxy files', () => {
     // test if it can process a string point to a file
-    // test 
-    // make rotator with file with spaces
-    //let proxies_file = './assets/http_proxies_with_spaces.txt';
-    //let rotator_with_spaces = new ProxyRotator(proxies_file);
-    // make rotator with file with commas
-    //proxies_file = './assets/http_proxies_with_commas.txt';
-    //let rotator_with_commans = new ProxyRotator(proxies_file);
     it('reading file with newlines', () => {
         // make rotator with file with newlines
         let proxies_file = './assets/http_proxies_with_newlines.txt';
@@ -25,7 +19,7 @@ describe('being able to process different types of proxies inputs', () => {
         let rotator_with_newlines = new ProxyRotator(proxies_file); 
         // get pool
         let pool = rotator_with_newlines.get_pool();
-        assert.deepEqual(proxies, pool)
+        assert.deepEqual(test_proxies, pool)
     })
     // test if it can process a file with spaces
     it('reading file with spaces', () => {
@@ -35,7 +29,7 @@ describe('being able to process different types of proxies inputs', () => {
         let rotator_with_spaces = new ProxyRotator(proxies_file);
         // get pool
         let pool = rotator_with_spaces.get_pool();
-        assert.deepEqual(proxies, pool)
+        assert.deepEqual(test_proxies, pool)
     })
     // test if it can process a file with commas
     it('reading file with commas', () => {
@@ -45,69 +39,79 @@ describe('being able to process different types of proxies inputs', () => {
         let rotator_with_commas = new ProxyRotator(proxies_file);
         // get pool
         let pool = rotator_with_commas.get_pool();
-        assert.deepEqual(proxies, pool)
+        assert.deepEqual(test_proxies, pool)
     })
 });
 
-    /*
+// check the functionality of the rotator
+describe('basic functionality', () => {
+    // test if it can process a string point to a file
+    it('add proxies array', () => {
+        // make rotator with file with newlines
+        let rotator = new ProxyRotator(test_proxies);
+        // get pool
+        assert.deepEqual(test_proxies,rotator.get_pool())
+    })
+});
+/*
     // isChecked
     it('isCheck()', () => 
         assert.equal(checklist.isChecked(values[1]), true)
     )
-    // values done
+// values done
     it('valuesDone()', () => 
         assert.equal(checklist.valuesDone(), 1)
     )
-    // get checked values
+// get checked values
     it('getcheckedValues()', () => {
         assert.deepEqual(
             checklist.getCheckedValues(), 
             values.filter(e => e === values[1])
         )
     })
-    // get missing values
+// get missing values
     it('getMissingValues()', () => {
         assert.deepEqual( 
             checklist.getMissingValues(),
             values.filter(e => e !== values[1])
         )
     })
-    // missing left()
+// missing left()
     it('missingLeft()', () => 
         assert.equal(checklist.missingLeft(), 4)
     )
-    // next missing()
+// next missing()
     it('next()', () => 
         assert.equal(checklist.next(), values[0])
     )
-    // uncheck
+// uncheck
     it('uncheck()', () => {
         checklist.uncheck(values[1])
         assert.equal(checklist.isChecked(values[1]), false)
     })
-    // getValues
+// getValues
     it('getValues()', () => {
         assert.deepEqual(checklist.getValues(), values)
     })
-    // valuesCount
+// valuesCount
     it('valuesCount()', () => {
         assert.equal(checklist.valuesCount(), 5)
     })
-    // add
+// add
     it('add()', () => {
         checklist.add(other_values[0])
         expect(checklist.getValues()).to.include(other_values[0])
     })
-    // remove
+// remove
     it('remove()', () => {
         checklist.remove(other_values[0])
         expect(checklist.getValues()).to.not.include(other_values[0])
     })
-    // isDone
+// isDone
     it('isDone()', () => 
         expect(checklist.isDone()).to.equal(false)
     )
-    // isNotDone
+// isNotDone
     it('isNotDone()', () => 
         expect(checklist.isNotDone()).to.equal(true)
     )

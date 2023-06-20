@@ -13,6 +13,9 @@ class ProxyRotator {
             proxies = this._parse_file(proxies);
             // add proxies to queue
             proxies.forEach( p => this._add(p) );
+        }else if( this._isArray(proxies) ){
+            // add proxies to queue
+            proxies.forEach( p => this._add(p) );
         }
         // handle options
         let { switch_rate, use_rate, shuffle, protocol, assume_aliveness } = options;
