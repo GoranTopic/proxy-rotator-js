@@ -1,5 +1,5 @@
 class Proxy {
-    constructor(proxy, protocol = 'http') {
+    constructor(proxy, protocol = null) {
         // if proxy string starts with protocol
         if( proxy.includes('://') ){
             this.protocol = proxy.split('://')[0];
@@ -10,16 +10,18 @@ class Proxy {
             this.ip = proxy.split(':')[0];
             this.port = proxy.split(':')[1];
         }
+        // the proxy 
+        this.proxy = `${(this.protocol)? this.protocol+'://' : ''}${this.ip}:${this.port}`;
         // status can be 'new', 'alive', 'dead'
         this.status = 'new';
         this.changeTimeStamp = Date.now();
     }
     // method to return as string
     proxy() {
-        return `${this.protocol}://${this.ip}:${this.port}`;
+        return `${(this.protocol)? this.protocol+'://' : ''}${this.ip}:${this.port}`;
     }
     toString() {
-        return `${this.protocol}://${this.ip}:${this.port}`;
+        return `${(this.protocol)? this.protocol+'://' : ''}${this.ip}:${this.port}`;
     }
     // method to return as obj
     get() {

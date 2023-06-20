@@ -4,45 +4,55 @@ import Proxy from './Proxy.js';
 
 class ProxyRotator {
     constructor(proxies, options={} ){
+        this.pool = new Queue();
+        this.graveyard = new Queue();
         // examine proxies passed
         // check if it is a file path
         if( typeof proxies === 'string' ){
-            // read file
-            let file = fs.readFileSync(proxies, 'utf8');
-            // split by new line or space
-            proxies = file.split('\n').map(p=>p.trim()).filter(p=>p.length>0);
-            // make a proxy for each proxy
-            // if it starts with a protocol
-            proxies = proxies.map( proxy => new Proxy(proxy) );
-            proxies = proxies.map( proxy => proxy.get() );
-            console.log(proxies);
+            // parse file
+            proxies = this._parse_file(proxies);
+            // add proxies to queue
+            proxies.forEach( p => this._add(p) );
         }
         // handle options
         let { switch_rate, use_rate, shuffle, protocol, assume_aliveness } = options;
-        /*
-        this.pool = new Queue();
-        this.dead = new Queue();
         // 1000ms * 60s * 30m = 30m
-        this.timeout_rate = 1000 * 60 * 30;
+        //this.timeout_rate = 1000 * 60 * 30;
         // get initial proxies
-        let initial_proxy_pool = this.shuffleArray(
-            [ ...get_premium_proxies() ]
-        );
+        //let initial_proxy_pool = this._shuffleArray();
         // add the new proxies to the queue
-        this.add_new_proxies(initial_proxy_pool);
-        */
+        //this.add_new_proxies(initial_proxy_pool);
+    }
+
+    get_pool_size(){ return this.pool.size }
+
+    get_graveyard_size(){ return this.graveyard.size }
+
+    get_pool () {
+        return this.pool.toArray().map(p => p.proxy)
     }
 
     add(proxies){ // add proxy to queue
+        if(this._isArray(proxies)) // if passed an array
+            for(let proxy of proxies) this._add(proxy);
+        else // single file
+            this._add(proxies);
+    }
+
+    _add(proxy){ // add proxy to queue
         let p = new Proxy(proxy);
         this.pool.enqueue(p);
     }
 
-    _
-if(this._isArray(items)) // if passed an array
-            for(let item of items) this._enqueue(item);
+    remove(proxy){ // remove proxy from queue
+        if(this._isArray(proxy)) // if passed an array
+            for(let p of proxy) this._remove(p);
         else // single file
-            this._enqueue(items);
+            this._remove(proxy);
+    }
+
+    _remove(proxy){ // remove proxy from queue
+        this.pool.remove(proxy);
     }
 
     find_proxy_by_str(str){
@@ -101,10 +111,27 @@ if(this._isArray(items)) // if passed an array
             return func( proxy )
         }
 
-    async getOnlineFreeProxies() {
-        // scrap online free proxies
-        let new_proxies = await get_free_online_proxies();
-        this.add_new_proxies(new_proxies);
+    _parse_file(filename) {
+        // read file
+        let str = fs.readFileSync(filename, 'utf8');
+        // this function is able to handle multiples types of files
+        let strList = str.split('\n')
+        // remove lines that are empty
+        strList = strList.filter(s=>s.length>0);
+        // if strList is has only one element
+        if(strList.length === 1)
+            strList = str.split(' ')
+        // if strList is has only one check to separate by comma
+        if(strList.length === 1)
+            strList = str.split(',')
+        // remove all the commas from the strings
+        strList = strList.map(s=>s.replace(',',''))
+        // parse list of strings into 
+        strList = strList
+            .map(s=>s.trim())
+            .filter(s=>s.length>0);
+        // return proxies
+        return strList;
     }
 
     next = () => {
@@ -173,6 +200,12 @@ if(this._isArray(items)) // if passed an array
         proxy.times_resurected += 1;
         proxy.timeoutID = null;
         this.queue.push(proxy);
+    }
+
+    _isArray(arrayValue){
+        return ( arrayValue && 
+            (typeof arrayValue === 'object') && 
+            (arrayValue.constructor === Array) );
     }
 }
 

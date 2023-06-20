@@ -3,14 +3,15 @@ import assert from 'assert';
 import chai from 'chai';
 const expect = chai.expect
 
-//slogan: when you like a little risk with you proxies
-
-// check if i 
+// slogan: when you like a little risk with you proxies
+// proxies to test with 
+let proxies = [ '139.59.1.14:8080', '94.45.74.60:8080', 
+    '161.35.70.249:3128', '217.182.170.224:80', '222.138.76.6:9002',
+    '218.252.206.89:80',  '18.214.66.210:80', '120.234.203.171:9002' ]
+// check if it is able to read from difrent files
 describe('being able to process different types of proxies inputs', () => {
     // test if it can process a string point to a file
-    // make rotator with file with newlines
-    let proxies_file = './assets/http_proxies_with_newlines.txt';
-    let rotator_with_newlines = new ProxyRotator(proxies_file); 
+    // test 
     // make rotator with file with spaces
     //let proxies_file = './assets/http_proxies_with_spaces.txt';
     //let rotator_with_spaces = new ProxyRotator(proxies_file);
@@ -18,8 +19,33 @@ describe('being able to process different types of proxies inputs', () => {
     //proxies_file = './assets/http_proxies_with_commas.txt';
     //let rotator_with_commans = new ProxyRotator(proxies_file);
     it('reading file with newlines', () => {
-        let value = checklist._checklist.get(JSON.stringify(values[1]))
-        assert.equal(value , true)
+        // make rotator with file with newlines
+        let proxies_file = './assets/http_proxies_with_newlines.txt';
+        // make rotator with file with newlines
+        let rotator_with_newlines = new ProxyRotator(proxies_file); 
+        // get pool
+        let pool = rotator_with_newlines.get_pool();
+        assert.deepEqual(proxies, pool)
+    })
+    // test if it can process a file with spaces
+    it('reading file with spaces', () => {
+        // make rotator with file with spaces
+        let proxies_file = './assets/http_proxies_with_spaces.txt';
+        // make rotator with file with spaces
+        let rotator_with_spaces = new ProxyRotator(proxies_file);
+        // get pool
+        let pool = rotator_with_spaces.get_pool();
+        assert.deepEqual(proxies, pool)
+    })
+    // test if it can process a file with commas
+    it('reading file with commas', () => {
+        // make rotator with file with commas
+        let proxies_file = './assets/http_proxies_with_commas.txt';
+        // make rotator with file with spaces
+        let rotator_with_commas = new ProxyRotator(proxies_file);
+        // get pool
+        let pool = rotator_with_commas.get_pool();
+        assert.deepEqual(proxies, pool)
     })
 });
 
