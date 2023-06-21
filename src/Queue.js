@@ -17,6 +17,20 @@ class Queue {
         this.frontIndex++
         return item
     }
+    
+    // remove value while maintaining order
+    remove( index ) {
+        if (index < 0 || index >= this.backIndex) {
+            return 'Invalid index'
+        }
+        const item = this.items[index]
+        for (let i = index; i < this.backIndex; i++) {
+            this.items[i] = this.items[i + 1]
+        }
+        delete this.items[this.backIndex - 1]
+        this.backIndex--
+        return item
+    }
 
     peek() {
         return this.items[this.frontIndex]

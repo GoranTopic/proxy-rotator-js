@@ -41,9 +41,31 @@ class Proxy {
             changeTimeStamp: this.changeTimeStamp
         }
     }
+    // mark proxy as dead
     kill() {
         this.status = 'dead';
         this.changeTimeStamp = Date.now();
+    }
+    setDead() {
+        this.status = 'dead'
+        this.changeTimeStamp = Date.now();
+    }
+    setAlive(){
+        this.status = 'alive'
+        this.changeTimeStamp = Date.now();
+    }
+    setNew() { 
+        this.status = 'new'
+        this.changeTimeStamp = Date.now();
+    }
+    isDead() { 
+        return this.status === 'dead';
+    }
+    isAlive() {
+        return this.status === 'alive';
+    }
+    isNew() {
+        return this.status === 'new';
     }
     revive() {
         this.status = 'alive';
@@ -55,6 +77,11 @@ class Proxy {
     }
     status() {
         return this.status;
+    }
+    equals(proxy) {
+        if (typeof proxy === 'string')
+            proxy = new Proxy(proxy);
+        return (this.ip === proxy.ip && this.port === proxy.port);      
     }
     timeSinceStatusChange() {
         return Date.now() - this.changeTimeStamp;

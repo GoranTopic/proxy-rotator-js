@@ -5,12 +5,12 @@ import Proxy from './Proxy.js';
 class ProxyRotator {
     constructor(proxies, options={} ){
         this.pool = new Queue();
-        this.graveyard = new Queue();
+        this.graveyard = [];
         // examine proxies passed
         // check if it is a file path
         if( typeof proxies === 'string' ){
             // parse file
-            proxies = this._parse_file(proxies);
+            proxies = this._parseFile(proxies);
             // add proxies to queue
             proxies.forEach( p => this._add(p) );
         }else if( this._isArray(proxies) ){
@@ -18,22 +18,27 @@ class ProxyRotator {
             proxies.forEach( p => this._add(p) );
         }
         // handle options
-        let { switch_rate, use_rate, shuffle, protocol, assume_aliveness } = options;
-        // 1000ms * 60s * 30m = 30m
-        //this.timeout_rate = 1000 * 60 * 30;
-        // get initial proxies
-        //let initial_proxy_pool = this._shuffleArray();
-        // add the new proxies to the queue
-        //this.add_new_proxies(initial_proxy_pool);
+        let { revive_timer, shuffle, protocol, assume_aliveness, check_on_next } = options;
+        // how long to wait before reviving a dead proxy
+        // default: 30 minutes
+        this.revive_timer = revive_timer ?? 1000 * 60 * 30;
+        // assume a a protocol for all proxies
+        this.protocol = protocol ?? null;
+        // shuffle the proxies before adding them to the queue
+        this.shuffle = shuffle ?? true;
+        // assume all proxies are alive when first added instead of 'new'
+        this.assume_aliveness = assume_aliveness ?? false;
+        // check if proxies are alive when they are added to the queue
+        this.check_on_next = check_on_next ?? false;
     }
 
-    get_pool_size(){ return this.pool.size }
+    getGraveyard(){ return this.graveyard.map(p => p.proxy) }
 
-    get_graveyard_size(){ return this.graveyard.size }
+    getGraveyardSize(){ return this.graveyard.length }
 
-    get_pool () {
-        return this.pool.toArray().map(p => p.proxy)
-    }
+    getPool(){ return this.pool.toArray().map(p => p.proxy) }
+
+    getPoolSize(){ return this.pool.size }
 
     add(proxies){ // add proxy to queue
         if(this._isArray(proxies)) // if passed an array
@@ -55,43 +60,64 @@ class ProxyRotator {
     }
 
     _remove(proxy){ // remove proxy from queue
-        this.pool.remove(proxy);
+        this.pool.toArray().forEach( (p,i) => {
+            if(p.equals(proxy)) this.pool.remove(i);
+        });
     }
 
-    find_proxy_by_str(str){
-        // look for a single proxy with the str
-        let proxy_pool = [ ...this.dead, ...this.queue ];
-        return proxy_pool.filter( proxy => str === proxy )[0];
+    getAlive(){ // get a random alive proxy
+        let proxies = this.pool.toArray();
+        for( let proxy of proxies )
+            if(proxy.isAlive()) return proxy.proxy;
     }
 
-    remove_proxy_from_all(str){
-        // remove proxy from any list it is in
-        this.queue = this.queue.filter( proxy => proxy.proxy !== str )
-        this.dead = this.dead.filter( proxy => proxy.proxy !== str )
+    setAlive(proxy){ // set a proxy to alive
+        let proxies = this.pool.toArray()
+        for( let p of proxies ) // if proxy is in queue
+            if(p.equals(proxy)) return p.setAlive();
+        // if proxy is in graveyard
+        for( let p of this.graveyard )
+            if(p.equals(proxy)) return this.resurect(p);
     }
 
-    remove_proxy_from_queue(str){
-        // remove proxy from queue
-        this.dead = this.dead.filter( proxy => proxy.proxy !== str )
+    resurect( proxy ){
+        // get proxy from graveyard
+        let p = this.graveyard.find( p => p.equals(proxy) );
+        // if proxy is not in graveyard
+        if(!p) return;
+        // remove from graveyard
+        this.graveyard = this.graveyard.filter( p => !p.equals(proxy) );
+        // set as new
+        p.setNew();
+        // add to queue
+        this.pool.enqueue(p);
     }
 
-    remove_proxy_from_dead(str){
-        // remove proxy from any dead list
-        this.queue = this.queue.filter( proxy => proxy.proxy !== str )
+    setDead(proxy){ // set a proxy to dead
+        this.pool.toArray().forEach( (p,i) => {
+            if(p.equals(proxy)){
+                p.setDead(); // set to dead
+                // remove from queue
+                this.pool.remove(i);
+                // add to graveyard
+                this.graveyard.push(p);
+            }
+        })
+        //  revive proxy after revive_timer
+        setTimeout( () => this.resurect(proxy), this.revive_timer );
     }
 
-    add_new_proxies(proxies){
-        // with a list of proxies, add them to the queue
-        proxies.forEach( proxy => 
-            this.queue.push({
-                status:'Unknown', 
-                timeoutID: null,
-                times_resurected: null,
-                ip: proxy.split(':')[0],
-                port: proxy.split(':')[1],
-                proxy
-            })
-        )
+    next(){
+        // resurect a proxy from the graveyard
+        if(this.check_on_next) _resurection();
+        // if there are no proxies in the pool
+        if(this.pool.size === 0) return null ;
+        // remove from front 
+        let proxy = this.pool.dequeue();
+        // add to back
+        this.pool.enqueue(proxy);
+        // return 
+        return proxy
     }
 
     /* Randomize array in-place using Durstenfeld shuffle algorithm */
@@ -105,16 +131,7 @@ class ProxyRotator {
         return array;
     }
 
-    str_param_decorator = func => 
-        function(proxy){
-            // if it is passed a str insted of obj, 
-            if( proxy instanceof String )
-                // ge the proxy obj
-                proxy = find_proxy_by_str( proxy );
-            return func( proxy )
-        }
-
-    _parse_file(filename) {
+    _parseFile(filename) {
         // read file
         let str = fs.readFileSync(filename, 'utf8');
         // this function is able to handle multiples types of files
@@ -137,79 +154,22 @@ class ProxyRotator {
         return strList;
     }
 
-    next = () => {
-        if(this.queue.length === 0){
-            // there are not proxies
-            console.error("no proxies in queue");
-            return null ;
-        }
-        // remove from front 
-        let proxy = this.queue.shift();
-        // add to back
-        this.queue.push(proxy);
-        // return 
-        return proxy
-    }
-
-    getAlive = () => {
-        if(this.queue.length === 0){
-            // there are not proxies
-            console.error("no proxies in queue");
-            return null ;
-        }
-        let proxy = null;
-        for(let i =0;i<this.queue.length;i++)
-            if( this.queue[i].status === "Alive"){
-                // get first Alive proxy
-                proxy = this.queue.splice(i,1);
-                // add it to the end
-                this.queue.push(proxy);
-                // stop loop
-                i = this.queue.length;
-            }
-        return proxy;
-    }
-
-    setAlive = this.str_param_decorator( proxy =>  {
-        // if it is dead 
-        if(proxy.status === "Dead")
-            // bring it back to life
-            this.resurect_proxy(proxy, "Alive")
-        // if it is unknown
-        else if(proxy.status === "Unknown")
-            proxy.status = "Alive";
-    })
-
-    setDead = this.str_param_decorator( proxy =>  {
-        this.remove_proxy_from_queue(proxy.proxy);
-        proxy.status = 'Dead';
-        if(proxy.timeoutID){
-            clearTimeout(proxy.timeoutID)
-            proxy.timeoutID = setTimeout( 
-                this.resurect_proxy(proxy), 
-                this.timeout_rate * ( proxy.times_resurected ?? 1 )
-            );
-        }
-        this.dead.push(proxy);
-    })
-
-    getList = () => [ ...this.queue, ...this.dead ] 
-
-    getAliveList = () => this.queue
-
-    resurect_proxy( proxy, status="Unknown" ){
-        this.remove_proxy_from_dead(proxy.proxy);
-        proxy.status = status;
-        proxy.times_resurected += 1;
-        proxy.timeoutID = null;
-        this.queue.push(proxy);
-    }
 
     _isArray(arrayValue){
         return ( arrayValue && 
             (typeof arrayValue === 'object') && 
             (arrayValue.constructor === Array) );
     }
+
+    _resurection(){
+        // look for proxies that have been 
+        // dead for a long than the resurection time
+        // and revive them
+        for( let proxy of this.graveyard )
+            if( proxy.isDead() && proxy.timeSinceStatusChange >= this.revive_timer )
+                this.resurect(proxy);
+    }
+
 }
 
 export default ProxyRotator 
