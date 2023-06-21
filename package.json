@@ -1,8 +1,8 @@
 {
-  "name": "proxy-roulette",
+  "name": "proxy-rotator",
   "version": "1.0.0",
   "type": "module",
-  "description": "Proxy Roulette",
+  "description": "Proxy Rotator",
   "main": "index.js",
   "directories": {
     "test": "test"
