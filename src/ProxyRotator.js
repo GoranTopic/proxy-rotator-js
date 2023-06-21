@@ -18,10 +18,12 @@ class ProxyRotator {
             proxies.forEach( p => this._add(p) );
         }
         // handle options
-        let { revive_timer, shuffle, protocol, assume_aliveness, check_on_next } = options;
+        let { returnType, revive_timer, shuffle, protocol, assume_aliveness, check_on_next } = options;
         // how long to wait before reviving a dead proxy
         // default: 30 minutes
         this.revive_timer = revive_timer ?? 1000 * 60 * 30;
+        // return type of proxy
+        this.returnType = returnType ?? 'string'; // or 'object'
         // assume a a protocol for all proxies
         this.protocol = protocol ?? null;
         // shuffle the proxies before adding them to the queue
@@ -111,7 +113,7 @@ class ProxyRotator {
         return this.setDead(proxy);
     }
 
-    next(){
+    next(returnType='string'){
         // resurect a proxy from the graveyard
         if(this.check_on_next) _resurection();
         // if there are no proxies in the pool
@@ -120,8 +122,12 @@ class ProxyRotator {
         let proxy = this.pool.dequeue();
         // add to back
         this.pool.enqueue(proxy);
-        // return 
-        return proxy
+        // if returnType is 'string'
+        if(this.returnType === 'string')
+            // return proxy as string
+            return proxy.proxy;
+        else if(this.returnType === 'object')
+            return proxy.toObject();
     }
 
     /* Randomize array in-place using Durstenfeld shuffle algorithm */
