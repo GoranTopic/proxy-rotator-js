@@ -1,6 +1,6 @@
 {
   "name": "proxy-rotator-js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "Proxy Rotator",
   "main": "index.js",
@@ -39,6 +39,7 @@
     "fill-range": "^7.0.1",
     "find-up": "^5.0.0",
     "flat": "^5.0.2",
+    "fs": "^0.0.1-security",
     "fs.realpath": "^1.0.0",
     "get-caller-file": "^2.0.5",
     "get-func-name": "^2.0.0",

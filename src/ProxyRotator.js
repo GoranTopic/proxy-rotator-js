@@ -107,6 +107,10 @@ class ProxyRotator {
         setTimeout( () => this.resurect(proxy), this.revive_timer );
     }
 
+    kill(proxy){ // kill a proxy
+        return this.setDead(proxy);
+    }
+
     next(){
         // resurect a proxy from the graveyard
         if(this.check_on_next) _resurection();
