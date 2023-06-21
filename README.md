@@ -26,6 +26,22 @@ console.log( rotator.next() ) // 'proxy1'
 console.log( rotator.next() ) // 'proxy2'
 ```
 
+or you can pass the path to a proxy file
+
+```javascript
+
+import ProxyRotator from 'proxy-rotator-js'
+
+let filename = '/path/to/proxy/file.txt'
+
+let rotator = new ProxyRotator(filename, options={});
+
+
+console.log( rotator.next() ) // 'proxy1'
+console.log( rotator.next() ) // 'proxy2'
+```
+
+
 Initializes a new instance of ProxyRotator with the given proxies and options. The proxies parameter can be a file path or an array of proxies. The options parameter allows customization of various settings such as revive timer, shuffling, protocol assumption, and more.
 Methods
 
@@ -79,15 +95,6 @@ Import the ProxyRotator class into your JavaScript file using the following line
 
 const proxies = ['proxy1:8000', 'proxy2:322', 'proxy3:543'];
 const rotator = new ProxyRotator(proxies);
-
-```
-
-or you can pass the path to a proxy file
-
-```javascript
-
-const filename = '/path/to/proxy/file.txt'
-const rotator = new ProxyRotator(filename);
 
 ```
 
