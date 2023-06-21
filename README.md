@@ -9,20 +9,14 @@ ProxyRotator is a JavaScript class that provides a mechanism for managing a pool
 
 ## Installation
 ```
-npm install proxy-rotator
+npm install proxy-rotator-js
 ```
-
-## Properties
-
-    pool: Represents the pool of proxies as a queue.
-
-    graveyard: Stores proxies that are currently dead or inactive.
 
 ## Usage
 
 ```javascript
 
-import ProxyRoulette from 'proxy-rotator'
+import ProxyRotator from 'proxy-rotator-js'
 
 let proxies = ['proxy1', 'proxy2', 'proxy3']
 
@@ -61,6 +55,12 @@ getGraveyardSize() // Returns the number of proxies in the graveyard.
 remove(proxy) // Removes one or more proxies from the pool.
 ```
 
+## Properties
+
+    pool: Represents the pool of proxies as a queue.
+
+    graveyard: Stores proxies that are currently dead or inactive.
+
 ## Getting Started
 
 To use the ProxyRotator class in your JavaScript project, follow these steps:
@@ -68,15 +68,10 @@ To use the ProxyRotator class in your JavaScript project, follow these steps:
     Make sure you have Node.js  and npm installed on your system. 
 
 ```javascript
-npm install proxy-rotator
+npm install proxy-rotator-js
 ```
 
 Import the ProxyRotator class into your JavaScript file using the following line of code:
-
-```javascript
-
-import ProxyRotator from './ProxyRotator.js';
-```
 
     Create an instance of ProxyRotator by calling the constructor and providing the required parameters. For example:
 
@@ -84,6 +79,15 @@ import ProxyRotator from './ProxyRotator.js';
 
 const proxies = ['proxy1:8000', 'proxy2:322', 'proxy3:543'];
 const rotator = new ProxyRotator(proxies);
+
+```
+
+or you can pass the path to a proxy file
+
+```javascript
+
+const filename = '/path/to/proxy/file.txt'
+const rotator = new ProxyRotator(filename);
 
 ```
 
