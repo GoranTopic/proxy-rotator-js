@@ -23,26 +23,40 @@ npm install proxy-rotator
 
 import ProxyRoulette from 'proxy-rotator'
 
-let rotator =  
-constructor(proxies, options={})
+let proxies = ['proxy1', 'proxy2', 'proxy3']
 
+let rotator = ProxyRotator(proxies, options={})
+
+console.log( rotator.next() ) // 'proxy1'
+console.log( rotator.next() ) // 'proxy2'
 ```
 
 Initializes a new instance of ProxyRotator with the given proxies and options. The proxies parameter can be a file path or an array of proxies. The options parameter allows customization of various settings such as revive timer, shuffling, protocol assumption, and more.
 Methods
 
 ### Methods 
-    next(): Rotates the proxy by moving the front proxy to the end of the pool and returns it.
-    add(proxies): Adds one or more proxies to the pool.
-    getAlive(): Retrieves a random alive proxy from the pool.
-    setAlive(proxy): Sets a specific proxy to an alive state.
-    setDead(proxy): Sets a specific proxy to a dead state and moves it to the graveyard.
-    resurrect(proxy): Moves a proxy from the graveyard back to the pool.
-    getPool(): Returns an array of proxies in the pool.
-    getPoolSize(): Returns the number of proxies in the pool.
-    getGraveyard(): Returns an array of proxies in the graveyard (dead proxies).
-    getGraveyardSize(): Returns the number of proxies in the graveyard.
-    remove(proxy): Removes one or more proxies from the pool.
+
+next(): Rotates the proxy by moving the front proxy to the end of the pool and returns it.
+
+add(proxies): Adds one or more proxies to the pool.
+
+getAlive(): Retrieves a random alive proxy from the pool.
+
+setAlive(proxy): Sets a specific proxy to an alive state.
+
+setDead(proxy): Sets a specific proxy to a dead state and moves it to the graveyard.
+
+resurrect(proxy): Moves a proxy from the graveyard back to the pool.
+
+getPool(): Returns an array of proxies in the pool.
+
+getPoolSize(): Returns the number of proxies in the pool.
+
+getGraveyard(): Returns an array of proxies in the graveyard (dead proxies).
+
+getGraveyardSize(): Returns the number of proxies in the graveyard.
+
+remove(proxy): Removes one or more proxies from the pool.
 
 #### Getting Started
 
