@@ -1,233 +1,127 @@
-Proxy Roulette
+Proxy Rotator
 =======
 #### 
 
+
+## Introduction
+
+ProxyRotator is a JavaScript class that provides a mechanism for managing a pool of proxies and rotating them based on their availability and status.
+
 ## Installation
 ```
-npm install proxy-roulette
+npm install proxy-rotator
 ```
+
+### Properties
+
+    pool: Represents the pool of proxies as a queue.
+    graveyard: Stores proxies that are currently dead or inactive.
+
 ## Usage
+
 ```javascript
-import ProxyRoulette from 'proxy-roulette'
 
-const shoppingList = [ 
-  '🥚 eggs', 
-  '🥩 ham', 
-  '🧀 cheese', 
-  '🍎 apple', 
-  '🥦 broccoli' 
-];
+import ProxyRoulette from 'proxy-rotator'
 
-// create a checklist
-const checklist = new Checklist(shopping_lits);
-
-let eggs = await fetch('https://emojipedia.org/egg/');
-// check eggs
-if(eggs) checklist.check('🥚 eggs');
-
-let ham = await fetch('https://emojipedia.org/ham/');
-// check ham
-if(ham) checklist.check('🥩 ham');
-
-checklist.next() // '🧀 cheese'
-
-checklist.next() // '🍎 apple'
-
-// uncheck 🥚 eggs
-checklist.uncheck('🥚 eggs')
-
-/* 🥚 eggs ? */
-checklist.isChecked('🥚 eggs') // false
-
-/* 🥩 ham ? */
-checklist.isChecked('🥚 eggs') // true
-
-/*[ 
-  '🥚 eggs', 
-  '🧀 cheese',
-  '🍎 apple',
-  '🥦 broccoli',
-]*/
-checklist.getMissingValues();
-checklist.getMissingLeft(); // 4
-
-/*[ 
-  '🥩 ham',
-]*/
-checklist.getCheckedValues()
-checklist.valuesDone() // 1
-
-/* check if all the values have been checked */
-checklist.isDone() // false
-checklist.isNotDone() // true
-
-/*
-false : 🥚 eggs 
-true : 🥩 ham
-false : 🧀 cheese
-false : 🍎 apple
-false : 🥦 broccoli
-*/
-checklist.log()
-
-// delete the checklist in the files system
-checklist.delete()
-```
-#### while loop usage
-```javascript
-while(checklist.isNotDone()){
-  // get the next missing value on the checklist
-  let value  = checklist.next()
-  // perform some operation 
-  let result = await fetch('https://emojipedia.org/');
-  // check the value if successful
-  if(result) checklist.check(value);
-}
-
-// delete the checklist in the files system
-if(checklist.isDone())
-  checklist.delete()
-```
-
-
-Permenance
-====
-#### you can recover the same checklist by creating it again with the same values
-```javascript
-const checklist = new Checklist([ 
-  '🥚 eggs', 
-  '🥩 ham',  
-  '🥦 broccoli' 
-]);
-
-// check
-checklist.check('🥚 eggs');
-checklist.check('🥩 ham');
-
-/*
-true : 🥚 eggs 
-true : 🥩 ham
-false : 🥦 broccoli
-*/
-checklist.log()
-
-```
-```javascript
-/* after crash or diffrent file*/
-const checklist = new Checklist([ 
-  '🥚 eggs', 
-  '🥩 ham',  
-  '🥦 broccoli' 
-]);
-
-/*
-true : 🥚 eggs 
-true : 🥩 ham
-false : 🥦 broccoli
-*/
-checklist.log()
-```
-#### the order values does not matter when recovering the checklist
-```javascript
-/* after crash or diffrent file*/
-const checklist = new Checklist([ 
-  '🥦 broccoli' 
-  '🥩 ham',
-  '🥚 eggs', 
-]);
-
-/*
-false : 🥦 broccoli 
-true : 🥩 ham
-true : 🥚 eggs
-*/
-checklist.log()
-```
-#### pass the name options to make it the checklist unique
-```javascript
-let shoppingList = [ 
-  '🥦 broccoli' 
-  '🥩 ham',
-  '🥚 eggs', 
-];
-
-const bobs_checklist = new Checklist(
-  shoppingList, { name: 'bobs shoppinglist' } 
-);
-bobs_checklist.check(['🥩 ham', '🥚 eggs'])
-
-const alices_checklist = new Checklist(
-  shoppingList, { name: 'alices shoppinglist' } 
-);
-alices_checklist.check('🥦 broccoli')
-
-```
-#### recover the checklist with the name option
-```javascript
-/* after crash or diffrent file*/
-const bobs_checklist = 
-  new Checklist(null, { name: 'bobs shoppinglist' });
-  
-/*
-false : 🥦 broccoli 
-true : 🥩 ham
-true : 🥚 eggs
-*/
-bobs_checklist.log()
-
-const alices_checklist = 
-  new Checklist(null, { name: 'alices shoppinglist' });
-  
-/*
-false : 🥦 broccoli 
-true : 🥩 ham
-true : 🥚 eggs
-*/
-bobs_checklist.log()
- ```
-#### pass the path where to make the filesystem
-```javascript 
-  new Checklist([], { 
-    name: 'my_checklist',
-    path: process.cwd()
-  });
-  
- ```
-### Recalculate missing values on Check
-#### sometime when you are working with multiple concurrent processes you don't want the completion of one process to alter the order you would get the missing vlaue
-#### this can lead to a missing values being drawn twice after a check. 
-#### There is also the senario where you have too many values and doing recalc on every check will take too long
-#### For this senarios you can set the option recalc_on_check to false
-#### pass the path where to make the filesystem
-```javascript 
-  new Checklist([], { 
-    recalc_on_check: false
-  });
-  
- ```
- 
- Adding, Removing and Checking multiple values
-====
-```javascript
-// add 🥓 bacon
-checklist.add('🥓 bacon')
-// or 
-checklist.add(['🍞 Bread', '🍆 Eggplant', '🥛 Milk'])
-
-// remove 🥚 eggs
-checklist.remove('🥚 eggs')
-// or 
-checklist.remove(['🥩 ham', '🥓 bacon', '🍞 Bread', '🥛 Milk'])
-
-// check 🧀 cheese
-checklist.check('🧀 cheese')
-// or 
-checklist.check([ '🍆 Eggplant', '🍎 apple' , '🥦 broccoli'])
-
-// uncheck 🧀 cheese
-checklist.unchek('🧀 cheese')
-// or 
-checklist.uncheck([ '🍆 Eggplant', '🍎 apple' , '🥦 broccoli'])
+let rotator =  
+constructor(proxies, options={})
 
 ```
 
+Initializes a new instance of ProxyRotator with the given proxies and options. The proxies parameter can be a file path or an array of proxies. The options parameter allows customization of various settings such as revive timer, shuffling, protocol assumption, and more.
+Methods
+
+### Methods 
+    next(): Rotates the proxy by moving the front proxy to the end of the pool and returns it.
+    add(proxies): Adds one or more proxies to the pool.
+    getAlive(): Retrieves a random alive proxy from the pool.
+    setAlive(proxy): Sets a specific proxy to an alive state.
+    setDead(proxy): Sets a specific proxy to a dead state and moves it to the graveyard.
+    resurrect(proxy): Moves a proxy from the graveyard back to the pool.
+    getPool(): Returns an array of proxies in the pool.
+    getPoolSize(): Returns the number of proxies in the pool.
+    getGraveyard(): Returns an array of proxies in the graveyard (dead proxies).
+    getGraveyardSize(): Returns the number of proxies in the graveyard.
+    remove(proxy): Removes one or more proxies from the pool.
+
+#### Getting Started
+
+To use the ProxyRotator class in your JavaScript project, follow these steps:
+
+    Make sure you have Node.js  and npm installed on your system. 
+
+    npm install proxy-rotator
+
+    Import the ProxyRotator class into your JavaScript file using the following line of code:
+
+```javascript
+
+import ProxyRotator from './ProxyRotator.js';
+```
+
+    Create an instance of ProxyRotator by calling the constructor and providing the required parameters. For example:
+
+```javascript
+
+const proxies = ['proxy1:8000', 'proxy2:322', 'proxy3:543'];
+const rotator = new ProxyRotator(proxies);
+
+```
+
+    Access the properties and methods of the ProxyRotator object using dot notation. For example:
+
+```javascript
+
+rotator.next();
+// 'proxy1:500'
+const poolSize = proxyRotator.getPoolSize();
+// 3
+const aliveProxy = proxyRotator.getAlive();
+// 'proxy2:500'
+proxyRotator.setAlive( 'proxy2:500' );
+// null 
+```
+
+### Examples
+
+
+```javascript
+
+import ProxyRotator from './ProxyRotator.js';
+
+// Create an instance of ProxyRotator
+const proxies = ['proxy1', 'proxy2', 'proxy3'];
+const options = { revive_timer: 1800000, shuffle: true };
+const proxyRotator = new ProxyRotator(proxies, options);
+
+// Access the properties
+console.log(proxyRotator.getGraveyard());  // Output: []
+console.log(proxyRotator.getGraveyardSize());  // Output: 0
+console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy2', 'proxy3']
+console.log(proxyRotator.getPoolSize());  // Output: 3
+
+// Call the methods
+proxyRotator.add('proxy4');
+console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy2', 'proxy3', 'proxy4']
+proxyRotator.remove('proxy2');
+console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy3', 'proxy4']
+const aliveProxy = proxyRotator.getAlive();
+console.log(aliveProxy);  // Output: 'proxy1'
+proxyRotator.setAlive('proxy3');
+proxyRotator.next(); // prox1
+proxyRotator.next(); // prox3
+proxyRotator.next(); // prox4
+console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy4', 'proxy3']
+```
+
+### Contributing
+
+If you would like to contribute to the ProxyRotator project, you can fork the repository and make your desired changes. Feel free to submit a pull request with your improvements or bug fixes. We appreciate your contributions!
+License
+
+The ProxyRotator class is released under the MIT License. You can freely use and modify it in your projects. Please refer to the license file for more information.
+Contact
+
+If you have any questions, suggestions, or feedback regarding the ProxyRotator class, please me =) Goran Topic @  telegonicaxx@live.com. We appreciate your input and are happy to assist you.
+
+Thank you for using the ProxyRotator class. We hope it helps simplify your proxy management and rotation tasks.
