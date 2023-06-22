@@ -7,12 +7,12 @@ class ProxyRotator {
         this.pool = new Queue();
         this.graveyard = [];
         // handle options
-        let { proxyType, revive_timer, shuffle, protocol, assume_aliveness, check_on_next } = options;
+        let { returnAs, revive_timer, shuffle, protocol, assume_aliveness, check_on_next } = options;
         // how long to wait before reviving a dead proxy
         // default: 30 minutes
         this.revive_timer = revive_timer ?? 1000 * 60 * 30;
         // return type of proxy, either 'string' or 'object'
-        this.proxyType = proxyType? this._handleProxyTypeInput(proxyType) : 'string';
+        this.returnAs = returnAs? this._handleReturnAsInput(returnAs) : 'string';
         // assume a a protocol for all proxies
         this.protocol = protocol ?? null;
         // shuffle the proxies before adding them to the queue
@@ -113,7 +113,8 @@ class ProxyRotator {
         return this.setDead(proxy);
     }
 
-    next(proxyType=null){
+    next(options={}){
+        let { returnAs } = options;
         // resurect a proxy from the graveyard
         if(this.check_on_next) _resurection();
         // if there are no proxies in the pool
@@ -122,12 +123,13 @@ class ProxyRotator {
         let proxy = this.pool.dequeue();
         // add to back
         this.pool.enqueue(proxy);
-        // if returnType is 'string'
-        if(proxyType === null) proxyType = this.proxyType;
-        else proxyType = this._handleProxyTypeInput(proxyType);
-        // return proxy
-        if(proxyType === 'string') return proxy.proxy;
-        else if(this.returnType === 'object') return proxy.toObject();
+        // if parameter is passed
+        if(returnAs) returnAs = this._handleReturnAsInput(returnAs)
+        // else use default
+        else returnAs = this.returnAs;
+        // retun proxy as string or object
+        if(returnAs === 'string') return proxy.toString();
+        else if(returnAs === 'object') return proxy.obj()
     }
 
     /* Randomize array in-place using Durstenfeld shuffle algorithm */
@@ -141,16 +143,18 @@ class ProxyRotator {
         return array;
     }
 
-    _handleProxyTypeInput(proxyType=null){
-        if(proxyType === null) return null;
-        proxyType = proxyType.toLowerCase();
-        if(proxyType === 'str') proxyType = 'string';
-        if(proxyType === 'obj') proxyType = 'object';
-        if(proxyType !== 'string' && proxyType !== 'object'){
-            console.error('proxyType must be either "string" or "object"');
-            proxyType = 'string';
-        }
-        return proxyType;
+    _handleReturnAsInput(proxyType=null){
+        if(typeof proxyType === 'string'){
+            proxyType = proxyType.toLowerCase();
+            if(proxyType === 'str') proxyType = 'string';
+            if(proxyType === 'obj') proxyType = 'object';
+            if(proxyType !== 'string' && proxyType !== 'object'){
+                console.error('proxyType must be either "string" or "object"');
+                proxyType = null
+            }
+            return proxyType;
+        }else
+            return null;
     }
     
     _parseFile(filename) {

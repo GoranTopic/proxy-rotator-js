@@ -47,14 +47,14 @@ describe('read form proxy files', () => {
 describe('basic functionality', () => {
     // test if it can process a string point to a file
     it('add proxies array', () => {
-        // make rotator with file with newlines
+        // make rotator 
         let rotator = new ProxyRotator(test_proxies);
         // get pool
         assert.deepEqual(test_proxies,rotator.getPool())
     })
     // adding one by one
     it('add proxy one by one ', () => {
-        // make rotator with file with newlines
+        // make rotator
         let rotator = new ProxyRotator();
         // add proxies one by one
         for(let proxy of test_proxies) rotator.add(proxy)
@@ -167,3 +167,38 @@ describe('basic functionality', () => {
         }, 1000);
     })
 });
+
+// check return type of proxy
+describe('Test return type', () => {
+    // test if it return as obj when option is set
+    it('test default return string type', () => {
+        // make rotator
+        let rotator = new ProxyRotator(test_proxies);
+        // remove proxies one by one
+        let proxy = rotator.next()
+        // test if it is string
+        assert.equal(typeof proxy, 'string')
+    })
+    it('teset if it return object when passed returnAs obj', () => {
+        // make rotator
+        let rotator = new ProxyRotator(test_proxies, { returnAs: 'object' });
+        // remove proxies one by one
+        let proxy = rotator.next()
+        // test if it is string
+        assert.equal(typeof proxy, 'object')
+    })
+    it('teset if it return obj when passed as paramter', () => {
+        // make rotator
+        let rotator = new ProxyRotator(test_proxies);
+        // remove proxies one by one
+        let proxy = rotator.next({ returnAs:'obj'})
+        // test if it is string
+        assert.equal(typeof proxy, 'object')
+        // try to get sring
+        let proxy2 = rotator.next({ returnAs: 'str'})
+        // test if it is string
+        assert.equal(typeof proxy2, 'string')
+    })
+});
+
+
