@@ -6,6 +6,21 @@ class ProxyRotator {
     constructor(proxies, options={} ){
         this.pool = new Queue();
         this.graveyard = [];
+        // handle options
+        let { proxyType, revive_timer, shuffle, protocol, assume_aliveness, check_on_next } = options;
+        // how long to wait before reviving a dead proxy
+        // default: 30 minutes
+        this.revive_timer = revive_timer ?? 1000 * 60 * 30;
+        // return type of proxy, either 'string' or 'object'
+        this.proxyType = proxyType? this._handleProxyTypeInput(proxyType) : 'string';
+        // assume a a protocol for all proxies
+        this.protocol = protocol ?? null;
+        // shuffle the proxies before adding them to the queue
+        this.shuffle = shuffle ?? true;
+        // assume all proxies are alive when first added instead of 'new'
+        this.assume_aliveness = assume_aliveness ?? false;
+        // check if proxies are alive when they are added to the queue
+        this.check_on_next = check_on_next ?? false;
         // examine proxies passed
         // check if it is a file path
         if( typeof proxies === 'string' ){
@@ -17,21 +32,6 @@ class ProxyRotator {
             // add proxies to queue
             proxies.forEach( p => this._add(p) );
         }
-        // handle options
-        let { proxyType, revive_timer, shuffle, protocol, assume_aliveness, check_on_next } = options;
-        // how long to wait before reviving a dead proxy
-        // default: 30 minutes
-        this.revive_timer = revive_timer ?? 1000 * 60 * 30;
-        // return type of proxy, either 'string' or 'object'
-        this.proxyType = _handleProxyTypeInput(proxyType);
-        // assume a a protocol for all proxies
-        this.protocol = protocol ?? null;
-        // shuffle the proxies before adding them to the queue
-        this.shuffle = shuffle ?? true;
-        // assume all proxies are alive when first added instead of 'new'
-        this.assume_aliveness = assume_aliveness ?? false;
-        // check if proxies are alive when they are added to the queue
-        this.check_on_next = check_on_next ?? false;
     }
 
     getGraveyard(){ return this.graveyard.map(p => p.proxy) }
@@ -50,7 +50,7 @@ class ProxyRotator {
     }
 
     _add(proxy){ // add proxy to queue
-        let p = new Proxy(proxy);
+        let p = new Proxy(proxy, this.protocol, this.assume_aliveness);
         this.pool.enqueue(p);
     }
 
@@ -141,7 +141,8 @@ class ProxyRotator {
         return array;
     }
 
-    _handleProxyTypeInput(proxyType){
+    _handleProxyTypeInput(proxyType=null){
+        if(proxyType === null) return null;
         proxyType = proxyType.toLowerCase();
         if(proxyType === 'str') proxyType = 'string';
         if(proxyType === 'obj') proxyType = 'object';
