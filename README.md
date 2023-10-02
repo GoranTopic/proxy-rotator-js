@@ -20,7 +20,7 @@ import ProxyRotator from 'proxy-rotator-js'
 
 let proxies = ['proxy1', 'proxy2', 'proxy3']
 
-let rotator = ProxyRotator(proxies, options={})
+let rotator = new ProxyRotator(proxies, options={})
 
 console.log( rotator.next() ) // 'proxy1'
 console.log( rotator.next() ) // 'proxy2'
