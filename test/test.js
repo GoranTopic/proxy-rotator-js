@@ -179,7 +179,7 @@ describe('Test return type', () => {
         // test if it is string
         assert.equal(typeof proxy, 'string')
     })
-    it('teset if it return object when passed returnAs obj', () => {
+    it('test if it return object when passed returnAs obj', () => {
         // make rotator
         let rotator = new ProxyRotator(test_proxies, { returnAs: 'object' });
         // remove proxies one by one
@@ -187,7 +187,7 @@ describe('Test return type', () => {
         // test if it is string
         assert.equal(typeof proxy, 'object')
     })
-    it('teset if it return obj when passed as paramter', () => {
+    it('test if it return obj when passed as paramter', () => {
         // make rotator
         let rotator = new ProxyRotator(test_proxies);
         // remove proxies one by one
