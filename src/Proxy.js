@@ -4,10 +4,12 @@ class Proxy {
         if( proxy.includes('://') ){
             this.protocol = proxy.split('://')[0];
             this.ip = proxy.split('://')[1].split(':')[0];
+            this.host = this.ip;
             this.port = proxy.split('://')[1].split(':')[1];
         } else { // if proxy string does not start with protocol
             this.protocol = protocol;
             this.ip = proxy.split(':')[0];
+            this.host = this.ip;
             this.port = proxy.split(':')[1];
         }
         // the proxy 
@@ -28,6 +30,7 @@ class Proxy {
         return {
             protocol: this.protocol,
             ip: this.ip,
+            host: this.host,
             port: this.port,
         };
     }
@@ -36,6 +39,7 @@ class Proxy {
         return {
             protocol: this.protocol,
             ip: this.ip,
+            host: this.host,
             port: this.port,
             status: this.status,
             changeTimeStamp: this.changeTimeStamp
