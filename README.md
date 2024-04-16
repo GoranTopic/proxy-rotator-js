@@ -77,6 +77,7 @@ remove(proxy) // Removes one or more proxies from the pool.
 
     graveyard: Stores proxies that are currently dead or inactive.
 
+
 ## Getting Started
 
 To use the ProxyRotator class in your JavaScript project, follow these steps:

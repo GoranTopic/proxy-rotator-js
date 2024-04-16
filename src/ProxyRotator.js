@@ -16,7 +16,7 @@ class ProxyRotator {
         // assume a a protocol for all proxies
         this.protocol = protocol ?? null;
         // shuffle the proxies before adding them to the queue
-        this.shuffle = shuffle ?? true;
+        this.shuffle = shuffle ?? false;
         // assume all proxies are alive when first added instead of 'new'
         this.assume_aliveness = assume_aliveness ?? false;
         // check if proxies are alive when they are added to the queue
@@ -31,6 +31,12 @@ class ProxyRotator {
         }else if( this._isArray(proxies) ){
             // add proxies to queue
             proxies.forEach( p => this._add(p) );
+        }
+        // shuffle proxies
+        if(this.shuffle){
+            let shuffled = this._shuffleArray(this.pool.toArray());
+            this.pool = new Queue();
+            shuffled.forEach( p => this.pool.enqueue(p) );
         }
     }
 
