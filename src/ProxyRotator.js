@@ -1,6 +1,7 @@
 import fs from 'fs';
 import Queue from './Queue.js';
 import Proxy from './Proxy.js';
+import makeRequestWithProxy from './utils/makeRequestWithProxy.js';
 
 class ProxyRotator {
     constructor(proxies, options={} ){
@@ -201,6 +202,37 @@ class ProxyRotator {
             if( proxy.isDead() && proxy.timeSinceStatusChange >= this.revive_timer )
                 this.resurect(proxy);
     }
+
+    async test_proxies(){
+        // test if proxies are working
+        let proxies = this.pool.toArray()
+            .map(p=>p.proxy)
+            .map(p=> ({
+                host:p.split(':')[0],
+                port:p.split(':')[1]
+            }));
+        console.log('--- Testing Proxies ---');
+        let workingCount = 0;
+        let notWorkingCount = 0;
+        // make request with proxy
+        for (const proxy of proxies) {
+            console.log(`Testing proxy ${proxy.host}:${proxy.port}...`);    
+            const response = await makeRequestWithProxy(proxy);
+            if (response === proxy.host) {
+                console.log(`Proxy ${proxy.host}:${proxy.port} is working.`);
+                workingCount++;
+            } else {
+                console.log(`Proxy ${proxy.host}:${proxy.port} is not working.`);
+                notWorkingCount++;
+            }
+        }
+        console.log('--- Statistics ---');
+        console.log(`Total proxies: ${proxies.length}`);
+        console.log(`Working proxies: ${workingCount}`);
+        console.log(`Not working proxies: ${notWorkingCount}`);
+    }
+
+    test = this.test_proxies;
 
 }
 
