@@ -77,6 +77,28 @@ remove(proxy) // Removes one or more proxies from the pool.
 
     graveyard: Stores proxies that are currently dead or inactive.
 
+## Options
+```javascript
+const proxies = ['proxy1.example.com', 'proxy2.example.com'];
+const options = {
+    returnAs: 'object',
+    revive_timer: 1000 * 60 * 30,
+    shuffle: true,
+    protocol: 'http',
+    assume_aliveness: true,
+    check_on_next: true
+};
+
+const proxyRotator = new ProxyRotator(proxies, options);
+```
+    The following options can be passed to customize the behavior of the ProxyRotator:
+
+    - returnAs: Specifies the return type of proxies. Can be either 'string' or 'object'. Default: 'string'.
+    - revive_timer: Specifies the duration in milliseconds before a dead proxy is revived. Default: 1000 * 60 * 30 (30 minutes).
+    - protocol: Specifies a protocol for all proxies. Default: null.
+    - shuffle: Specifies whether to shuffle the proxies before adding them to the queue. Default: false.
+    - assume_aliveness: Specifies whether to assume all proxies are alive when first added instead of 'new'. Default: false.
+    - check_on_next: Specifies whether to check if proxies are alive when they are added to the queue. Default: false.
 
 ## Getting Started
 
