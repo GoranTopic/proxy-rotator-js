@@ -100,6 +100,18 @@ const proxyRotator = new ProxyRotator(proxies, options);
     - assume_aliveness: Specifies whether to assume all proxies are alive when first added instead of 'new'. Default: false.
     - check_on_next: Specifies whether to check if proxies are alive when they are added to the queue. Default: false.
 
+## Testing your Proxies
+
+```javascript
+import ProxyRotator from 'proxy-rotator-js'
+
+let proxies = ['proxy1', 'proxy2', 'proxy3']
+
+let rotator = new ProxyRotator(proxies, options={})
+
+rotator.test()
+```
+
 ## Getting Started
 
 To use the ProxyRotator class in your JavaScript project, follow these steps:
