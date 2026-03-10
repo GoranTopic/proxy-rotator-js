@@ -3,7 +3,18 @@
   "version": "1.1.1",
   "type": "module",
   "description": "Proxy Rotator",
-  "main": "index.js",
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/cjs/index.cjs",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "directories": {
     "test": "test"
   },
@@ -96,10 +107,18 @@
     "yocto-queue": "^0.1.0"
   },
   "devDependencies": {
-    "mocha": "^10.2.0"
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "mocha": "^10.2.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
   },
   "scripts": {
-    "test": "mocha"
+    "build": "tsc && tsc -p tsconfig.cjs.json && node scripts/fix-cjs.cjs",
+    "test": "tsc && mocha dist/test/*.js",
+    "test:consumer": "npm run build && cd test-consumer && npm install && node require.cjs && node import.js && npx tsx import.ts",
+    "prepublishOnly": "npm run build"
   },
   "author": "Goran Topic",
   "license": "ISC"

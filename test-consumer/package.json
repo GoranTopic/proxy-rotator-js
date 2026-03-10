@@ -1,0 +1,9 @@
+{
+  "name": "test-consumer",
+  "private": true,
+  "type": "module",
+  "description": "Simulates a consumer app that installed proxy-rotator-js",
+  "dependencies": {
+    "proxy-rotator-js": "file:.."
+  }
+}
