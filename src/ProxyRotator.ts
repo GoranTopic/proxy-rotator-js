@@ -3,7 +3,11 @@ import path from 'path';
 import Queue from './Queue.js';
 import Proxy from './Proxy.js';
 import makeRequestWithProxy from './utils/makeRequestWithProxy.js';
-import { getCountryFromIp } from './utils/geo.js';
+async function getCountryFromIp(ip: string) {
+  // @ts-expect-error - geo.cjs is valid at runtime
+  const geo = await import('./utils/geo.cjs');
+  return geo.getCountryFromIp(ip);
+}
 import type { ProxyObj } from './Proxy.js';
 
 export type ReturnAs = 'string' | 'object';

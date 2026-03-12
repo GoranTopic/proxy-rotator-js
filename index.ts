@@ -12,5 +12,5 @@ export type {
   ProxyTestResults,
 } from './src/ProxyRotator.js';
 export type { ProxyStatus, ProxyInfo, ProxyObj } from './src/Proxy.js';
-export type { GeoCountry } from './src/utils/geo.js';
+export type { GeoCountry } from './src/utils/geo-types.js';
 export type { ProxyConfig } from './src/utils/makeRequestWithProxy.js';

@@ -1,4 +1,4 @@
-import type { GeoCountry } from './utils/geo.js';
+import type { GeoCountry } from './utils/geo-types.js';
 
 export type ProxyStatus = 'new' | 'alive' | 'dead';
 

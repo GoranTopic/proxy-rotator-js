@@ -12,15 +12,17 @@ ProxyRotator is a JavaScript class that provides a mechanism for managing a pool
 npm install proxy-rotator-js
 ```
 
-### Geolocation (optional)
+### Geolocation
 
-To enable country lookup for proxies, download the GeoLite2-Country database:
+The GeoLite2-Country database is **bundled in the package** at `assets/GeoLite2-Country.mmdb`, so geo works immediately with no download step.
+
+To update to a newer database (MaxMind updates weekly), run:
 
 ```bash
 npm run download:geo
 ```
 
-This places `GeoLite2-Country.mmdb` in the `assets` folder. You can also set `GEO_DB_PATH` to point to a custom database location. For the latest data, sign up at [MaxMind](https://www.maxmind.com/) and set `MAXMIND_LICENSE_KEY` when running the download script.
+You can also set `GEO_DB_PATH` to point to a custom mmdb file.
 
 ## Usage
 

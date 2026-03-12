@@ -1,12 +1,10 @@
 /**
- * Run this script to see the output of status().
+ * Run with: npx tsx scripts/status-output.ts
+ * Or use: npm run status:output (uses status-output.mjs with built dist)
  *
- * Proxies added via constructor don't get geo by default — call refreshGeo() first.
- *
- * Usage: npm run status:output
- *    or: npx tsx scripts/status-output.ts
+ * Must use dist/ so geo.cjs path resolution works. Run "npm run build" first.
  */
-import ProxyRotator from '../index.js';
+import ProxyRotator from '../dist/index.js';
 
 const proxies = [
   '139.59.1.14:8080',
@@ -18,11 +16,8 @@ const proxies = [
 async function main() {
   const rotator = new ProxyRotator(proxies);
   rotator.setDead(proxies[2]);
-
   await rotator.refreshGeo();
-
   const status = rotator.status();
-
   console.log('--- status() output ---\n');
   console.log(JSON.stringify(status, null, 2));
 }
