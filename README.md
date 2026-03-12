@@ -5,12 +5,22 @@ Proxy Rotator
 
 ## Introduction
 
-ProxyRotator is a JavaScript class that provides a mechanism for managing a pool of proxies and rotating them based on their availability and status.
+ProxyRotator is a JavaScript class that provides a mechanism for managing a pool of proxies and rotating them based on their availability and status. It supports country geolocation lookup, pool status reporting, and proxy testing with JSON output for programmatic use.
 
 ## Installation
 ```
 npm install proxy-rotator-js
 ```
+
+### Geolocation (optional)
+
+To enable country lookup for proxies, download the GeoLite2-Country database:
+
+```bash
+npm run download:geo
+```
+
+This places `GeoLite2-Country.mmdb` in the `assets` folder. You can also set `GEO_DB_PATH` to point to a custom database location. For the latest data, sign up at [MaxMind](https://www.maxmind.com/) and set `MAXMIND_LICENSE_KEY` when running the download script.
 
 ## Usage
 
@@ -42,33 +52,44 @@ console.log( rotator.next() ) // 'proxy2'
 ```
 
 
-Initializes a new instance of ProxyRotator with the given proxies and options. The proxies parameter can be a file path or an array of proxies. The options parameter allows customization of various settings such as revive timer, shuffling, protocol assumption, and more.
-Methods
+Initializes a new instance of ProxyRotator with the given proxies and options. The proxies parameter can be a file path or an array of proxies. The options parameter allows customization of various settings such as revive timer, shuffling, protocol assumption, geolocation, and more.
+
+**Note:** `add()` and `add_file()` are async when `fetchGeo` is true. Proxies passed to the constructor are added synchronously without geo; use `refreshGeo()` to look up country for them later.
 
 ## Methods 
 
 ```javascript
-next() // Rotates the proxy by moving the front proxy to the end of the pool and returns it.
+next(options?)           // Rotates the proxy by moving the front proxy to the end of the pool and returns it.
+                         // Options: { returnAs: 'string' | 'object' } — when 'object', returns proxy with country info.
 
-add(proxies) // Adds one or more proxies to the pool.
+add(proxies)             // Adds one or more proxies to the pool. async — fetches country geolocation when fetchGeo is true.
 
-getAlive() //  Retrieves a random alive proxy from the pool.
+add_file(filename)       // Parses a file (newline-, space-, or comma-separated) and adds proxies. async.
 
-setAlive(proxy) // Sets a specific proxy to an alive state.
+status()                 // Returns pool status as JSON: { pool, graveyard, config }.
 
-setDead(proxy) // Sets a specific proxy to a dead state and moves it to the graveyard.
+refreshGeo()             // Fetches country geolocation for all proxies (constructor-added proxies start without geo). async.
 
-resurrect(proxy) // Moves a proxy from the graveyard back to the pool.
+test_proxies(options?)   // Tests proxies. Options: { output: 'console' | 'json' }.
+                         // Default 'console' — prints to stdout. Use output: 'json' to get results for programmatic use.
 
-getPool() // Returns an array of proxies in the pool.
+getAlive()               // Retrieves an alive proxy from the pool.
 
-getPoolSize() // Returns the number of proxies in the pool.
+setAlive(proxy)          // Sets a specific proxy to an alive state.
 
-getGraveyard() // Returns an array of proxies in the graveyard (dead proxies).
+setDead(proxy)           // Sets a specific proxy to a dead state and moves it to the graveyard.
 
-getGraveyardSize() // Returns the number of proxies in the graveyard.
+resurect(proxy)          // Moves a proxy from the graveyard back to the pool.
 
-remove(proxy) // Removes one or more proxies from the pool.
+getPool()                // Returns an array of proxy strings in the pool.
+
+getPoolSize()            // Returns the number of proxies in the pool.
+
+getGraveyard()           // Returns an array of proxies in the graveyard (dead proxies).
+
+getGraveyardSize()       // Returns the number of proxies in the graveyard.
+
+remove(proxy)            // Removes one or more proxies from the pool.
 ```
 
 ## Properties
@@ -86,7 +107,8 @@ const options = {
     shuffle: true,
     protocol: 'http',
     assume_aliveness: true,
-    check_on_next: true
+    check_on_next: true,
+    fetchGeo: true
 };
 
 const proxyRotator = new ProxyRotator(proxies, options);
@@ -98,18 +120,58 @@ const proxyRotator = new ProxyRotator(proxies, options);
     - protocol: Specifies a protocol for all proxies. Default: null.
     - shuffle: Specifies whether to shuffle the proxies before adding them to the queue. Default: false.
     - assume_aliveness: Specifies whether to assume all proxies are alive when first added instead of 'new'. Default: false.
-    - check_on_next: Specifies whether to check if proxies are alive when they are added to the queue. Default: false.
+    - check_on_next: Specifies whether to check for resurrection when calling next(). Default: false.
+    - fetchGeo: When true, fetches country geolocation (iso, name, continent) when adding proxies. Requires GeoLite2-Country.mmdb. Default: true.
 
 ## Testing your Proxies
 
 ```javascript
 import ProxyRotator from 'proxy-rotator-js'
 
-let proxies = ['proxy1', 'proxy2', 'proxy3']
+const proxies = ['proxy1', 'proxy2', 'proxy3']
+const rotator = new ProxyRotator(proxies)
 
-let rotator = new ProxyRotator(proxies, options={})
+// Print results to console (default)
+await rotator.test_proxies()
+// or rotator.test()
 
-rotator.test()
+// Get results as JSON for programmatic use
+const results = await rotator.test_proxies({ output: 'json' })
+// results = { results: [...], summary: { total, working, notWorking } }
+```
+
+## Pool Status
+
+```javascript
+const status = rotator.status()
+// Returns: { pool: { size, proxies }, graveyard: { size, proxies }, config: { ... } }
+```
+
+## Geolocation
+
+When `fetchGeo` is true (default), proxies added via `add()` or `add_file()` are enriched with country data. Use `returnAs: 'object'` to get the full proxy object including country:
+
+```javascript
+const rotator = new ProxyRotator(null, { fetchGeo: true })
+await rotator.add(['1.2.3.4:8080'])
+const proxy = rotator.next({ returnAs: 'object' })
+// proxy.country → { iso: 'US', name: 'United States', continent: 'NA' }
+```
+
+Proxies loaded via the constructor (file or array) do not get geo by default. Call `refreshGeo()` to populate country for existing proxies:
+
+```javascript
+const rotator = new ProxyRotator(['1.2.3.4:8080'])
+await rotator.refreshGeo()
+const proxy = rotator.next({ returnAs: 'object' })
+// proxy.country now populated
+```
+
+To skip geolocation (e.g. when the database is not available), set `fetchGeo: false`:
+
+```javascript
+const rotator = new ProxyRotator(null, { fetchGeo: false })
+await rotator.add('1.2.3.4:8080')
 ```
 
 ## Getting Started
@@ -165,8 +227,8 @@ console.log(proxyRotator.getGraveyardSize());  // Output: 0
 console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy2', 'proxy3']
 console.log(proxyRotator.getPoolSize());  // Output: 3
 
-// Call the methods
-proxyRotator.add('proxy4');
+// Call the methods (add is async when fetchGeo is true)
+await proxyRotator.add('proxy4');
 console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy2', 'proxy3', 'proxy4']
 proxyRotator.remove('proxy2');
 console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy3', 'proxy4']
@@ -182,10 +244,12 @@ console.log(proxyRotator.getPool());  // Output: ['proxy1', 'proxy4', 'proxy3']
 ### Contributing
 
 If you would like to contribute to the ProxyRotator project, you can fork the repository and make your desired changes. Feel free to submit a pull request with your improvements or bug fixes. We appreciate your contributions!
-License
+
+### License
 
 The ProxyRotator class is released under the MIT License. You can freely use and modify it in your projects. Please refer to the license file for more information.
-Contact
+
+### Contact
 
 If you have any questions, suggestions, or feedback regarding the ProxyRotator class, please me =) Goran Topic @  telegonicaxx@live.com. We appreciate your input and are happy to assist you.
 
