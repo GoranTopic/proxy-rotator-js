@@ -86,4 +86,37 @@ describe('status()', () => {
       assert.ok('status' in p && 'changeTimeStamp' in p);
     }
   });
+
+  it('output pool.proxies include country when geo populated via add', async function () {
+    this.timeout(5000);
+    const rotator = new ProxyRotator(null, { fetchGeo: true });
+    await rotator.add('8.8.8.8:53');
+    const status = rotator.status();
+    assert.strictEqual(status.pool.proxies.length, 1);
+    const p = status.pool.proxies[0];
+    assert.ok(p.country);
+    assert.strictEqual(typeof p.country!.iso, 'string');
+    assert.strictEqual(typeof p.country!.name, 'string');
+    assert.strictEqual(typeof p.country!.continent, 'string');
+    assert.strictEqual(p.country!.iso, 'US');
+  });
+
+  it('output pool.proxies include country when geo populated via refreshGeo', async function () {
+    this.timeout(5000);
+    const rotator = new ProxyRotator(['8.8.8.8:53']);
+    await rotator.refreshGeo();
+    const status = rotator.status();
+    assert.strictEqual(status.pool.proxies.length, 1);
+    const p = status.pool.proxies[0];
+    assert.ok(p.country);
+    assert.strictEqual(p.country!.iso, 'US');
+  });
+
+  it('output pool.proxies have no country when fetchGeo false', async () => {
+    const rotator = new ProxyRotator(null, { fetchGeo: false });
+    await rotator.add('8.8.8.8:53');
+    const status = rotator.status();
+    const p = status.pool.proxies[0];
+    assert.ok(!p.country || p.country === null);
+  });
 });
