@@ -25,8 +25,8 @@ export interface ProxyTestResults {
 
 /** Status of the pool returned by status(). */
 export interface PoolStatus {
-  pool: { size: number; proxies: string[] };
-  graveyard: { size: number; proxies: string[] };
+  pool: { size: number; proxies: ProxyObj[] };
+  graveyard: { size: number; proxies: ProxyObj[] };
   config: {
     revive_timer: number;
     returnAs: ReturnAs;
@@ -119,11 +119,11 @@ export default class ProxyRotator {
     return {
       pool: {
         size: this.pool.size,
-        proxies: this.getPool(),
+        proxies: this.pool.toArray().map((p) => p.obj()),
       },
       graveyard: {
         size: this.graveyard.length,
-        proxies: this.getGraveyard(),
+        proxies: this.graveyard.map((p) => p.obj()),
       },
       config: {
         revive_timer: this.revive_timer,

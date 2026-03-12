@@ -66,7 +66,7 @@ add(proxies)             // Adds one or more proxies to the pool. async — fetc
 
 add_file(filename)       // Parses a file (newline-, space-, or comma-separated) and adds proxies. async.
 
-status()                 // Returns pool status as JSON: { pool, graveyard, config }.
+status()                 // Returns pool status as JSON. Each proxy includes country, status, changeTimeStamp.
 
 refreshGeo()             // Fetches country geolocation for all proxies (constructor-added proxies start without geo). async.
 
@@ -144,7 +144,8 @@ const results = await rotator.test_proxies({ output: 'json' })
 
 ```javascript
 const status = rotator.status()
-// Returns: { pool: { size, proxies }, graveyard: { size, proxies }, config: { ... } }
+// Returns: { pool: { size, proxies: ProxyObj[] }, graveyard: { size, proxies: ProxyObj[] }, config }
+// Each proxy in proxies has: protocol, ip, host, port, status, changeTimeStamp, country (when fetchGeo)
 ```
 
 ## Geolocation
