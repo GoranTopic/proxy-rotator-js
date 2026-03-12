@@ -3,9 +3,40 @@ import path from 'path';
 import Queue from './Queue.js';
 import Proxy from './Proxy.js';
 import makeRequestWithProxy from './utils/makeRequestWithProxy.js';
+import { getCountryFromIp } from './utils/geo.js';
 import type { ProxyObj } from './Proxy.js';
 
 export type ReturnAs = 'string' | 'object';
+
+/** Result from a single proxy test. */
+export interface ProxyTestResult {
+  proxy: string;
+  working: boolean;
+  expectedIp: string;
+  actualIp: string | null;
+  error?: string;
+}
+
+/** Result from test_proxies(). */
+export interface ProxyTestResults {
+  results: ProxyTestResult[];
+  summary: { total: number; working: number; notWorking: number };
+}
+
+/** Status of the pool returned by status(). */
+export interface PoolStatus {
+  pool: { size: number; proxies: string[] };
+  graveyard: { size: number; proxies: string[] };
+  config: {
+    revive_timer: number;
+    returnAs: ReturnAs;
+    protocol: string | null;
+    shuffle: boolean;
+    assume_aliveness: boolean;
+    check_on_next: boolean;
+    fetchGeo: boolean;
+  };
+}
 
 export interface ProxyRotatorOptions {
   returnAs?: ReturnAs | 'str' | 'obj';
@@ -14,6 +45,8 @@ export interface ProxyRotatorOptions {
   protocol?: string | null;
   assume_aliveness?: boolean;
   check_on_next?: boolean;
+  /** If true, fetches country geolocation when adding proxies. Default true. */
+  fetchGeo?: boolean;
 }
 
 export default class ProxyRotator {
@@ -25,6 +58,7 @@ export default class ProxyRotator {
   shuffle: boolean;
   assume_aliveness: boolean;
   check_on_next: boolean;
+  fetchGeo: boolean;
 
   constructor(
     proxies?: null | string | string[],
@@ -38,6 +72,7 @@ export default class ProxyRotator {
       protocol,
       assume_aliveness,
       check_on_next,
+      fetchGeo = true,
     } = options;
 
     this.revive_timer = revive_timer ?? 1000 * 60 * 30;
@@ -46,6 +81,7 @@ export default class ProxyRotator {
     this.shuffle = shuffle ?? false;
     this.assume_aliveness = assume_aliveness ?? false;
     this.check_on_next = check_on_next ?? false;
+    this.fetchGeo = fetchGeo;
 
     if (proxies == null) {
       // no proxies
@@ -78,32 +114,84 @@ export default class ProxyRotator {
     return this.pool.size;
   }
 
-  add(proxies: string | string[]): void {
+  /** Returns the status of the pool as a JSON-serializable object. */
+  status(): PoolStatus {
+    return {
+      pool: {
+        size: this.pool.size,
+        proxies: this.getPool(),
+      },
+      graveyard: {
+        size: this.graveyard.length,
+        proxies: this.getGraveyard(),
+      },
+      config: {
+        revive_timer: this.revive_timer,
+        returnAs: this.returnAs,
+        protocol: this.protocol,
+        shuffle: this.shuffle,
+        assume_aliveness: this.assume_aliveness,
+        check_on_next: this.check_on_next,
+        fetchGeo: this.fetchGeo,
+      },
+    };
+  }
+
+  async add(proxies: string | string[]): Promise<void> {
     if (this._isArray(proxies)) {
-      for (const proxy of proxies) this._add(proxy);
+      for (const proxy of proxies) await this._add(proxy);
     } else {
-      this._add(proxies);
+      await this._add(proxies);
     }
   }
 
   /** Parse a file of proxies (newline-, space-, or comma-separated) and add each to the pool. */
-  add_file(filename: string): void {
+  async add_file(filename: string): Promise<void> {
     const parsed = this._parseFile(filename);
-    parsed.forEach((p) => this._add(p));
+    for (const p of parsed) await this._add(p);
   }
 
-  private _add(proxy: string): void {
-    const p = new Proxy(proxy, this.protocol, this.assume_aliveness);
+  /** Fetch country geolocation for all proxies in pool and graveyard. */
+  async refreshGeo(): Promise<void> {
+    const all = [...this.pool.toArray(), ...this.graveyard];
+    for (const p of all) {
+      try {
+        const country = await getCountryFromIp(p.ip);
+        p.setCountry(country);
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  private async _add(proxy: string): Promise<void> {
+    let country = null;
+    if (this.fetchGeo) {
+      try {
+        const ip = proxy.includes('://') ? proxy.split('://')[1].split(':')[0] : proxy.split(':')[0];
+        country = await getCountryFromIp(ip);
+      } catch {
+        // ignore geo lookup errors
+      }
+    }
+    const p = new Proxy(proxy, this.protocol, this.assume_aliveness, country);
     this.pool.enqueue(p);
   }
 
   /** Treat a string as either a file path (add all proxies from file) or a single proxy "ip:port" / "protocol://ip:port". */
   private _processOne(item: string): void {
     if (this._isFilePath(item)) {
-      this.add_file(item);
+      const parsed = this._parseFile(item);
+      for (const p of parsed) this._addSync(p);
     } else {
-      this._add(item);
+      this._addSync(item);
     }
+  }
+
+  /** Sync add used by constructor (no geo). Use add() for geo lookup. */
+  private _addSync(proxy: string): void {
+    const p = new Proxy(proxy, this.protocol, this.assume_aliveness, null);
+    this.pool.enqueue(p);
   }
 
   /** True if the string is an existing file path. */
@@ -250,29 +338,66 @@ export default class ProxyRotator {
     }
   }
 
-  async test_proxies(): Promise<void> {
-    const proxies = this.pool.toArray().map((p) => {
-      const parts = p.proxy.split(':');
-      return { host: parts[0], port: parts[1] };
-    });
-    console.log('--- Testing Proxies ---');
-    let workingCount = 0;
-    let notWorkingCount = 0;
-    for (const proxy of proxies) {
-      console.log(`Testing proxy ${proxy.host}:${proxy.port}...`);
-      const response = await makeRequestWithProxy(proxy);
-      if (response?.ip === proxy.host) {
-        console.log(`Proxy ${proxy.host}:${proxy.port} is working.`);
-        workingCount++;
-      } else {
-        console.log(`Proxy ${proxy.host}:${proxy.port} is not working.`);
-        notWorkingCount++;
+  async test_proxies(options?: {
+    /** "console" prints to stdout; "json" returns results. Default "console". */
+    output?: 'console' | 'json';
+  }): Promise<void | ProxyTestResults> {
+    const log = (options?.output ?? 'console') === 'console';
+    const poolProxies = this.pool.toArray();
+    const results: ProxyTestResult[] = [];
+
+    if (log) console.log('--- Testing Proxies ---');
+
+    for (const p of poolProxies) {
+      const proxyConfig = { host: p.host, port: p.port };
+      const proxyStr = p.proxy;
+
+      if (log) console.log(`Testing proxy ${proxyStr}...`);
+
+      const response = await makeRequestWithProxy(proxyConfig, {
+        quiet: !log,
+      });
+      const working = response?.ip === proxyConfig.host;
+      const result: ProxyTestResult = {
+        proxy: proxyStr,
+        working,
+        expectedIp: proxyConfig.host,
+        actualIp: response?.ip ?? null,
+      };
+      if (response == null) {
+        result.error = 'Request failed or timed out';
+      }
+      results.push(result);
+
+      if (log) {
+        if (working) {
+          console.log(`Proxy ${proxyStr} is working.`);
+        } else {
+          console.log(`Proxy ${proxyStr} is not working.`);
+        }
       }
     }
-    console.log('--- Statistics ---');
-    console.log(`Total proxies: ${proxies.length}`);
-    console.log(`Working proxies: ${workingCount}`);
-    console.log(`Not working proxies: ${notWorkingCount}`);
+
+    const workingCount = results.filter((r) => r.working).length;
+    const notWorkingCount = results.length - workingCount;
+
+    if (log) {
+      console.log('--- Statistics ---');
+      console.log(`Total proxies: ${results.length}`);
+      console.log(`Working proxies: ${workingCount}`);
+      console.log(`Not working proxies: ${notWorkingCount}`);
+    }
+
+    const payload: ProxyTestResults = {
+      results,
+      summary: {
+        total: results.length,
+        working: workingCount,
+        notWorking: notWorkingCount,
+      },
+    };
+
+    return log ? undefined : payload;
   }
 
   test = this.test_proxies;

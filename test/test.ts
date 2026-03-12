@@ -42,9 +42,9 @@ describe('basic functionality', () => {
     assert.deepEqual(test_proxies, rotator.getPool());
   });
 
-  it('add proxy one by one ', () => {
-    const rotator = new ProxyRotator();
-    for (const proxy of test_proxies) rotator.add(proxy);
+  it('add proxy one by one ', async () => {
+    const rotator = new ProxyRotator(null, { fetchGeo: false });
+    for (const proxy of test_proxies) await rotator.add(proxy);
     assert.deepEqual(test_proxies, rotator.getPool());
   });
 

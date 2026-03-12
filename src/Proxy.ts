@@ -1,3 +1,5 @@
+import type { GeoCountry } from './utils/geo.js';
+
 export type ProxyStatus = 'new' | 'alive' | 'dead';
 
 export interface ProxyInfo {
@@ -5,6 +7,7 @@ export interface ProxyInfo {
   ip: string;
   host: string;
   port: string;
+  country?: GeoCountry | null;
 }
 
 export interface ProxyObj extends ProxyInfo {
@@ -20,11 +23,13 @@ export default class Proxy {
   readonly proxy: string;
   status: ProxyStatus;
   changeTimeStamp: number;
+  country: GeoCountry | null = null;
 
   constructor(
     proxy: string,
     protocol: string | null = null,
-    assumeAlive: boolean = false
+    assumeAlive: boolean = false,
+    country: GeoCountry | null = null
   ) {
     if (proxy.includes('://')) {
       this.protocol = proxy.split('://')[0];
@@ -40,6 +45,7 @@ export default class Proxy {
     this.proxy = `${this.protocol ? this.protocol + '://' : ''}${this.ip}:${this.port}`;
     this.status = assumeAlive ? 'alive' : 'new';
     this.changeTimeStamp = Date.now();
+    this.country = country ?? null;
   }
 
   toString(): string {
@@ -52,6 +58,7 @@ export default class Proxy {
       ip: this.ip,
       host: this.host,
       port: this.port,
+      country: this.country ?? undefined,
     };
   }
 
@@ -63,7 +70,12 @@ export default class Proxy {
       port: this.port,
       status: this.status,
       changeTimeStamp: this.changeTimeStamp,
+      country: this.country ?? undefined,
     };
+  }
+
+  setCountry(country: GeoCountry | null): void {
+    this.country = country;
   }
 
   kill(): void {
